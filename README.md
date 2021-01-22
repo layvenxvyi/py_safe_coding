@@ -18,5 +18,5 @@ python的各类漏洞示范及对应提供修复代码
 执行manage.py，直接调用接口和参数直接测试。
 如：命令执行测试http://0.0.0.0:8888/api/cmdexec/?filename=test.txt;whoami&type=infected_1
 
-## 贡献
-1. 如果存在使用上的问题，欢迎提issue.
+## by the way
+存在任何问题，欢迎提issue.
