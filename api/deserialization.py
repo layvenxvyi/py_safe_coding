@@ -4,12 +4,9 @@
 # @Author   :   layven
 '''
 -反序列化漏洞：
--防御：1.pickle改为json，yaml[使用5.1版本以上+使用SafeLoader]；2.反序列化对象不接受可控数据；3.对反序列化数据进行签名校验；
+-防御：1.pickle/cPickle改为json，yaml[使用5.1版本以上+使用SafeLoader]；2.反序列化对象不接受可控数据；3.对反序列化数据进行签名校验；
 -出现场景：在解析认证token，session的时候；将对象Pickle后存储成磁盘文件；将对象Pickle后在网络中传输。
 -危险函数：pickle.load(s)/cPickle.load(s)/yaml
-
--参考：https://rules.sonarsource.com/python/type/Vulnerability/RSPEC-5135
-
 '''
 from flask_restful import Resource,reqparse
 from flask import jsonify
