@@ -13,13 +13,12 @@
 -类型2：靠执行脚本代码调用操作系统命令
     -危险函数：eval，exec
     -修复：
-    1.eval：不使用eval函数[正确示例4]；提供safe_eval方法替代eval方法[正确示例5]
-    [该方法仅保留安全且使用较多的函数集合，此外通过代码构造抽象语法树（AST）检查节点的类型来限制可用的属性访问语句，针对白名单里未包含的属性访问语句使用了`ast.literal_eval`函数进行兜底，当都未执行成功会直接抛出异常。]
+    1.eval：不使用eval函数[正确示例4]；ast.literal_eval方法替代eval方法[正确示例5]
     2.不使用exec或者不接受参数调用
 '''
 from flask_restful import Resource,reqparse
 from flask import render_template,make_response,jsonify
-import os,urllib,subprocess,shlex,re,json
+import os,urllib,subprocess,shlex,re,json,ast
 cmdparm=reqparse.RequestParser()
 cmdparm.add_argument('filename',type=str,required=False,help='执行命令参数-系统命令执行')
 cmdparm.add_argument('codeexec',type=str,required=False,help='执行命令参数-代码执行')
@@ -60,55 +59,9 @@ class cmdexec(Resource):
             # 正确示例-4，如转换str为dic可用json替代
             elif type=='safe_4':
                 data=json.loads(codeexec)
+            # 正确示例-5，使用ast.literal_eval替换【raises an exception if the input isn't a valid Python datatype, so the code won't be executed if it's not.】
             elif type=='safe_5':
-                data=safe_eval(codeexec)
+                data=ast.literal_eval(codeexec)
             return {'data': data}
         except Exception as e:
             return jsonify({"code": "异常", "message": "{}".format(e)})
-
-'''
-以下safe_eval函数用于提供一种沙箱环境下的安全eval功能。
-'''
-import ast
-import copy
-from multiprocessing import Pool
-
-def safe_eval(code, timeout=1):
-    pool = Pool(processes=1)
-    ret = pool.apply_async(run_eval, (code,))
-    return ret.get(timeout=timeout)
-
-def run_eval(code):
-    ast_code = ast.parse(code)
-    ASTSecurityChecker().visit(ast_code)
-    SAFE_FUNCTIONS = {
-        "max": max,
-        "int": int,
-        "str": str,
-        "abs": abs,
-        "ord": ord,
-        "chr": chr,
-        "hex": hex,
-        "oct": oct,
-        "sum": sum,
-        "bin": bin,
-        "divmod": divmod,
-        "len": len,
-        "min": min,
-        "reversed": reversed
-    }
-    BASE_GLOBS = {
-        "__builtins__": copy.deepcopy(SAFE_FUNCTIONS)
-    }
-    return eval(code, BASE_GLOBS)
-
-class ASTSecurityChecker(ast.NodeVisitor):
-    VISIT_WHITELIST = [
-        "Call", "Name", "Module", "Expr", "Dict","Num", "BinOp", "Add", "Mult",
-        "FloorDiv", "Div","Sub", "Tuple","Load", "NameConstant", "Str", "List"]
-    def __getattr__(self, attr):
-        if attr.startswith("visit_"):
-            node_type = attr[len("visit_"):]
-            if node_type not in self.VISIT_WHITELIST:
-                raise Exception(node_type+"is not permitted")
-            return getattr(super(ASTSecurityChecker, self), attr)
