@@ -91,8 +91,9 @@ class file_upload(Resource):
         exttype=[]
         if secure_tag:
             for ext in secure_tag:
-                if ext2mime[ext][0] not in exttype:
-                    exttype.append(ext2mime[ext][0])
+                for i in range(len(ext2mime[ext])):
+                    if ext2mime[ext][i] not in exttype:
+                        exttype.append(ext2mime[ext][i])
         try:mime = magic.from_buffer(file,mime=True)
         except:raise Exception('请传入文件')
         if mime in exttype:
