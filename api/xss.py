@@ -14,7 +14,7 @@
 '''
 
 from flask_restful import Resource,reqparse
-from flask import render_template,make_response,render_template_string
+from flask import render_template,make_response,render_template_string,Markup
 xssparm=reqparse.RequestParser()
 xssparm.add_argument('name',type=str,required=False,help='姓名')
 xssparm.add_argument('type',type=str,required=False,help='xss类型')
@@ -35,6 +35,15 @@ class xss(Resource):
             </html>
             '''
             return make_response(render_template_string(template, name=name))
+        # 正确示例-3,flask.Markup函数实体编码输出
+        elif type == 'safe_3':
+            name=Markup.escape(name)
+            template = '''
+                <html>
+                <div>%s</div>
+                </html>
+                ''' % (name)
+            return make_response(render_template_string(template))
         # 错误示例-1,内置函数{{}}自带输出编码,例外：style，javascript，onclick未手动escape；返回动态内容
         # http://0.0.0.0:8888/api/xss/?type=infected_1&name=alert(1)
         elif type=='infected_1':
